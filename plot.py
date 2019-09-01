@@ -6,7 +6,7 @@ res = [x.rstrip().split(', ') for x in f.readlines()]
 
 x = [50, 200, 800, 3200, 12800, 51200, 204800]
 
-ins1 = [ r for r in res if r[0]=='../instances/i-1.txt']
+ins1 = [ r for r in res if r[0]=='../instances/i-3.txt']
 algo_dict = {}
 
 # algo_dict = { round-robin : {50: [], 200: [] ,...}, ucb:{..},..}
@@ -34,7 +34,7 @@ for key,item in algo_dict.iteritems():
 
 plt.xscale('log')
 plt.yscale('log')
-plt.title('Bandit Instance i-1')
+plt.title('Bandit Instance i-3')
 plt.ylabel('Regret (log)')
 plt.xlabel('Horizon (log)')
 plt.plot(x,y['round-robin'],	  'C0', label='round-robin')
