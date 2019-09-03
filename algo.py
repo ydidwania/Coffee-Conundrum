@@ -19,13 +19,7 @@ class Bandit(object) :
         return horizon*(max(self._p_bandits))
 
 def ln(x):
-    if x == 0:
-        print x, "Hello"
-    try :
-        return np.log(x)
-    except:
-        print x
-        return np.log(x)
+    return np.log(x)
 
 def KL(x, y):
     eps = 1e-10
@@ -148,9 +142,6 @@ algorithm = args.algorithm.replace('-','_')
 
 bandit_instance = Bandit(len(lines), [float(p) for p in lines], args.randomSeed)
 algo_randSeed = args.randomSeed * 2
-# rew = round_robin(bandit_instance, args.horizon)
-# rew = epsilon_greedy(bandit_instance, args.horizon, args.epsilon, algo_randSeed)
-#rew = ucb(bandit_instance, args.horizon)
 rew = algorithms[args.algorithm](bandit_instance, args.horizon, algo_randSeed, args.epsilon)
 reg = bandit_instance.get_max_reward(args.horizon) - rew
-print ("%s, %s, %d, %s, %d, %s" %(args.instance, args.algorithm, args.randomSeed, args.epsilon, args.horizon, reg ))
+print ("%s, %s, %d, %s, %d, %s\n" %(args.instance, args.algorithm, args.randomSeed, args.epsilon, args.horizon, reg ))

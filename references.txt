@@ -1,0 +1,4 @@
+https://docs.scipy.org/doc/numpy-1.14.1/reference/routines.random.html
+https://docs.python.org/3/library/argparse.html
+StackOverflow
+
