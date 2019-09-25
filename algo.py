@@ -3,12 +3,17 @@ import numpy as np
 import argparse
 import math
 
+pho_s = 100.0
+pho_l = 200.0
+
+
 class Bandit(object) :
 
-    def __init__(self, n_bandits, p_bandits, rand_seed):
+    def __init__(self, n_bandits, p_bandits, rand_seed, price):
         self.n_bandits = n_bandits
         self._p_bandits = p_bandits
         self.rgen = nprand.RandomState(rand_seed)
+        self.price = price
 
     def pull(self, i) :
         if self.rgen.rand() < self._p_bandits[i]:
@@ -17,6 +22,9 @@ class Bandit(object) :
     
     def get_max_reward(self, horizon):
         return horizon*(max(self._p_bandits))
+    
+    def get_price(self, i):
+        return self.price[i]
 
 def ln(x):
     return np.log(x)
@@ -67,7 +75,8 @@ def epsilon_greedy(bandit, horizon, seed, epsilon, *args):
 
 def ucb(bandit, horizon, *args):
     nb = bandit.n_bandits
-    rew = 0
+    reg = 0
+    wins = 0
     p_emp = [0.0]*nb
     n_pulls = [0]*nb
     ucb_a = [0.0]*nb
@@ -80,11 +89,14 @@ def ucb(bandit, horizon, *args):
             arm = ucb_a.index(max(ucb_a))
         
         win = bandit.pull(arm)
-        rew += win
+        price = bandit.get_price(arm)
+        wins += win
+        reg += (win*(pho_l - price)/(pho_l - pho_s)) + (1-win)*1
         p_emp[arm] = (p_emp[arm]*n_pulls[arm] + win)/(n_pulls[arm] +1)
         n_pulls[arm] += 1
+        print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, Regret=%.2f"%(i, price, win, 100-(i+1-wins), reg))
 
-    return rew
+    return reg
 
 def kl_ucb(bandit, horizon, *args):
     nb = bandit.n_bandits
@@ -140,8 +152,8 @@ bandit_file = open(args.instance, 'r')
 lines = bandit_file.readlines()
 algorithm = args.algorithm.replace('-','_')
 
-bandit_instance = Bandit(len(lines), [float(p) for p in lines], args.randomSeed)
+bandit_instance = Bandit(len(lines), [float(p) for p in lines], args.randomSeed, [pho_s + (pho_l-pho_s)*i/19.0 for i in range(len(lines))])
 algo_randSeed = args.randomSeed * 2
 rew = algorithms[args.algorithm](bandit_instance, args.horizon, algo_randSeed, args.epsilon)
-reg = bandit_instance.get_max_reward(args.horizon) - rew
-print ("%s, %s, %d, %s, %d, %s\n" %(args.instance, args.algorithm, args.randomSeed, args.epsilon, args.horizon, reg ))
+# reg = bandit_instance.get_max_reward(args.horizon) - rew
+# print ("%s, %s, %d, %s, %d, %s\n" %(args.instance, args.algorithm, args.randomSeed, args.epsilon, args.horizon, reg ))
