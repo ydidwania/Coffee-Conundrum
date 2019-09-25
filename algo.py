@@ -76,7 +76,8 @@ def epsilon_greedy(bandit, horizon, seed, epsilon, *args):
 def ucb(bandit, horizon, *args):
     nb = bandit.n_bandits
     reg = 0
-    wins = 0
+    wins,earnings = 0,0
+    avg_l_price = 0.0
     p_emp = [0.0]*nb
     n_pulls = [0]*nb
     ucb_a = [0.0]*nb
@@ -85,17 +86,22 @@ def ucb(bandit, horizon, *args):
         if i<nb :
             arm = i
         else :
-            ucb_a = [p_emp[arm] + math.sqrt(2*ln(i)/n_pulls[arm]) for arm in range(0,nb)]
+            ucb_a = [abs(p_emp[arm] - 0.5) + math.sqrt(2*ln(i)/n_pulls[arm]) for arm in range(0,nb)]
             arm = ucb_a.index(max(ucb_a))
         
         win = bandit.pull(arm)
         price = bandit.get_price(arm)
         wins += win
         reg += (win*(pho_l - price)/(pho_l - pho_s)) + (1-win)*1
+        earnings += win*price + (1 - win)*pho_s
+        if (win):
+            avg_l_price = (avg_l_price*(wins-1) + (price))/wins
         p_emp[arm] = (p_emp[arm]*n_pulls[arm] + win)/(n_pulls[arm] +1)
         n_pulls[arm] += 1
         print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, Regret=%.2f"%(i, price, win, 100-(i+1-wins), reg))
 
+    print ("Total Earnings = ", earnings)
+    print ("Avg Large Price = ", avg_l_price) 
     return reg
 
 def kl_ucb(bandit, horizon, *args):
