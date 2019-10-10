@@ -4,9 +4,9 @@ import argparse
 from math import sqrt
 
 pho_s = 100.0
-pho_l = 200.0
+pho_l = 105.0
 cost_s = 50.0
-cost_l = 120.0
+cost_l = 60.0
 
 
 class Bandit(object) :
@@ -85,39 +85,38 @@ def ucb_bv1(bandit, horizon, *args):
     norm_max = max(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)
     nb = bandit.n_bandits
     reg = 0
-    wins,earnings = 0,0
+    B = 100
+    wins,earnings,i = 0,0,0
     avg_l_price = 0.0
     n_pulls = [0]*nb
     ucb_a = [0.0]*nb
     cost, rew = [0.0]*nb, [0.0]*nb 
     lmbda = 1e-6
-    budget = 1;
     D = lambda i,r,c,n : (r/c) + ((1+1/lmbda)*sqrt(ln(i)/n))/(lmbda - sqrt(ln(i)/n)) 
-    for i in range(0, horizon):
+    print("Starting out with Budget = ",B)
+    for _ in range(2):
+        while sum(cost) < B:
+            if i<nb :
+                arm = i
+            else :
+                ucb_a = [D(i,rew[arm], max(cost[arm],1e-6), n_pulls[arm]) for arm in range(nb)]
+                arm = ucb_a.index(max(ucb_a))
+            i += 1
+            win = bandit.pull(arm)
+            price = bandit.get_price(arm)
+            wins += win
+            cost[arm] += win*0 + (1 - win)*1.0
+            rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) - norm_min)/(norm_max - norm_min )
+            n_pulls[arm] += 1
 
-        if i<nb :
-            arm = i
-        elif sum(cost) >= 100:
-            arm = 0
-            budget = 0;
-        else :
-            ucb_a = [D(i,rew[arm], max(cost[arm],1e-6), n_pulls[arm]) for arm in range(nb)]
-            arm = ucb_a.index(max(ucb_a))
-        
-        win = bandit.pull(arm)
-        price = bandit.get_price(arm)
-        wins += win
-        cost[arm] += win*0 + (1 - win)*1.0
-        rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) - norm_min)/(norm_max - norm_min )
-        n_pulls[arm] += 1
-        reg += (win*(pho_l - price)/(pho_l - pho_s)) + (1-win)*1
+            if (win):
+                avg_l_price = (avg_l_price*(wins-1) + (price))/wins
+            
+            print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, 100 - sum(cost)))
+        print("BOOST BY 100 SMALL CUPS")
+        B = 200
 
-        if (win):
-            avg_l_price = (avg_l_price*(wins-1) + (price))/wins
-        
-        print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, Regret=%.2f, Budget=%d"%(i, price, win, 100-(i+1-wins), reg, budget))
-
-    earnings = sum(rew)*(norm_max - norm_min ) + 200*(norm_min)
+    earnings = sum(rew)*(norm_max - norm_min ) + i*(norm_min)
     print ("Total Earnings = ", earnings)
     print ("Avg Large Price = ", avg_l_price) 
     return reg
