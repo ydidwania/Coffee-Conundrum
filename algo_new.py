@@ -86,8 +86,7 @@ def ucb_bv1(bandit, horizon, *args):
     nb = bandit.n_bandits
     reg = 0
     B = 100
-    wins,earnings,i = 0,0,0
-    avg_l_price = 0.0
+    earnings,i = 0,0
     n_pulls = [0]*nb
     ucb_a = [0.0]*nb
     cost, rew = [0.0]*nb, [0.0]*nb 
@@ -95,6 +94,8 @@ def ucb_bv1(bandit, horizon, *args):
     D = lambda i,r,c,n : (r/c) + ((1+1/lmbda)*sqrt(ln(i)/n))/(lmbda - sqrt(ln(i)/n)) 
     print("Starting out with Budget = ",B)
     for _ in range(2):
+        wins,i = 0,0
+        avg_l_price = 0.0
         while sum(cost) < B:
             if i<nb :
                 arm = i
@@ -108,11 +109,11 @@ def ucb_bv1(bandit, horizon, *args):
             cost[arm] += win*0 + (1 - win)*1.0
             rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) - norm_min)/(norm_max - norm_min )
             n_pulls[arm] += 1
-
             if (win):
                 avg_l_price = (avg_l_price*(wins-1) + (price))/wins
-            
             print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, 100 - sum(cost)))
+        print ("Total Earnings = ", earnings)
+        print ("Avg Large Price = ", avg_l_price) 
         print("BOOST BY 100 SMALL CUPS")
         B = 200
 
