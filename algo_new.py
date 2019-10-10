@@ -4,7 +4,7 @@ import argparse
 from math import sqrt
 
 pho_s = 100.0
-pho_l = 105.0
+pho_l = 120.0
 cost_s = 50.0
 cost_l = 60.0
 
@@ -93,31 +93,33 @@ def ucb_bv1(bandit, horizon, *args):
     lmbda = 1e-6
     D = lambda i,r,c,n : (r/c) + ((1+1/lmbda)*sqrt(ln(i)/n))/(lmbda - sqrt(ln(i)/n)) 
     print("Starting out with Budget = ",B)
-    for _ in range(2):
-        wins,i = 0,0
-        avg_l_price = 0.0
-        while sum(cost) < B:
-            if i<nb :
-                arm = i
-            else :
-                ucb_a = [D(i,rew[arm], max(cost[arm],1e-6), n_pulls[arm]) for arm in range(nb)]
-                arm = ucb_a.index(max(ucb_a))
-            i += 1
-            win = bandit.pull(arm)
-            price = bandit.get_price(arm)
-            wins += win
-            cost[arm] += win*0 + (1 - win)*1.0
-            rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) - norm_min)/(norm_max - norm_min )
-            n_pulls[arm] += 1
-            if (win):
-                avg_l_price = (avg_l_price*(wins-1) + (price))/wins
-            print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, 100 - sum(cost)))
-        print ("Total Earnings = ", earnings)
-        print ("Avg Large Price = ", avg_l_price) 
-        print("BOOST BY 100 SMALL CUPS")
-        B = 200
+    # for _ in range(2):
+    wins,i = 0,0
+    avg_l_price = 0.0
+    while sum(cost) < B and (100 -(i-wins)) >0:
+        if i<nb :
+            arm = i
+        else :
+            ucb_a = [D(i,rew[arm], max(cost[arm],1e-6), n_pulls[arm]) for arm in range(nb)]
+            arm = ucb_a.index(max(ucb_a))
+        i += 1
+        win = bandit.pull(arm)
+        price = bandit.get_price(arm)
+        wins += win
+        cost[arm] += win*(pho_l - price)/(pho_l - pho_s)
+        rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) - norm_min)/(norm_max - norm_min )
+        # rew[arm] += (win*(price) + (1 - win)*(pho_s) - pho_s)/(pho_l - pho_s )
+        n_pulls[arm] += 1
+        if (win):
+            avg_l_price = (avg_l_price*(wins-1) + (price))/wins
+        print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, 100 -(i-wins)))
+        # print ("Total Earnings = ", earnings)
+        # print ("Avg Large Price = ", avg_l_price) 
+        # print("BOOST BY 100 SMALL CUPS")
+        # B = 200
 
-    earnings = sum(rew)*(norm_max - norm_min ) + i*(norm_min)
+    # earnings = sum(rew)*(pho_l - pho_s ) + i*(pho_s)
+    earnings = sum(rew)*(norm_max - norm_min ) + 200*(norm_min)
     print ("Total Earnings = ", earnings)
     print ("Avg Large Price = ", avg_l_price) 
     return reg
