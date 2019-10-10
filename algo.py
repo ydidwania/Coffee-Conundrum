@@ -31,50 +31,6 @@ class Bandit(object) :
 def ln(x):
     return np.log(x)
 
-def KL(x, y):
-    eps = 1e-10
-    x = min(max(x,eps), 1 - eps)
-    y = min(max(y,eps), 1 - eps)
-    return x*ln(x/y) + (1-x)*ln((1-x)/(1-y))
-
-def max_q(p_emp, upper, conf_bound, precision=1e-6):
-
-    lower = p_emp
-    while upper - lower > precision:
-        q = (lower + upper) / 2
-        if KL(p_emp, q) > conf_bound :
-            upper = q
-        else:
-            lower = q
-
-    return (lower + upper)/2
-
-
-def round_robin(bandit, horizon, *args):
-    nb = bandit.n_bandits
-    rew = 0
-    for i in range(0,horizon):
-        rew += bandit.pull(i%nb)
-    return rew
-
-def epsilon_greedy(bandit, horizon, seed, epsilon, *args):
-    rgen = nprand.RandomState(seed)
-    nb = bandit.n_bandits
-    rew = 0
-    p_emp = [0.0]*nb
-    n_pulls = [0]*nb
-    for _ in range(0, horizon):
-        if rgen.rand() > epsilon :
-            arm = p_emp.index(max(p_emp))
-        else:
-            arm = rgen.randint(0,nb)
-        win = bandit.pull(arm)
-        rew += win
-        p_emp[arm] = (p_emp[arm]*n_pulls[arm] + win)/(n_pulls[arm] +1)
-        n_pulls[arm] += 1
-
-    return rew
-
 def ucb(bandit, horizon, *args):
     nb = bandit.n_bandits
     reg = 0
@@ -105,28 +61,6 @@ def ucb(bandit, horizon, *args):
     print ("Total Earnings = ", earnings)
     print ("Avg Large Price = ", avg_l_price) 
     return reg
-
-def kl_ucb(bandit, horizon, *args):
-    nb = bandit.n_bandits
-    rew = 0
-    p_emp = [0.0]*nb
-    n_pulls = [0]*nb
-    ucb_a = [0.0]*nb
-    for i in range(0, horizon):
-
-        if i<nb :
-            arm = i
-        else :
-            d = ln(i) + 3*ln(ln(i))
-            ucb_a = [max_q(p_emp[arm], 1.0, d/n_pulls[arm]) for arm in range(0,nb)]
-            arm = ucb_a.index(max(ucb_a))
-        
-        win = bandit.pull(arm)
-        rew += win
-        p_emp[arm] = (p_emp[arm]*n_pulls[arm] + win)/(n_pulls[arm] +1)
-        n_pulls[arm] += 1
-
-    return rew
 
 def thompson_sampling(bandit, horizon, seed, *args):
     rgen = nprand.RandomState(seed)
@@ -170,7 +104,7 @@ def ucb_bv1(bandit, horizon, *args):
         price = bandit.get_price(arm)
         wins += win
         cost[arm] += win*0 + (1 - win)*1.0
-        rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) -  pho_s + cost_s)/(pho_l -cost_l- pho_s + cost_s)
+        rew[arm] += (win*(price-cost_l) + (1 - win)*(pho_s-cost_s) -  pho_s + cost_l)/(pho_l - pho_s )
         n_pulls[arm] += 1
         reg += (win*(pho_l - price)/(pho_l - pho_s)) + (1-win)*1
 
@@ -186,7 +120,7 @@ def ucb_bv1(bandit, horizon, *args):
 
 
 
-algorithms = [round_robin, epsilon_greedy, ucb, ucb_bv1, kl_ucb, thompson_sampling]
+algorithms = [ucb, ucb_bv1, thompson_sampling]
 algorithms = {algo.__name__.replace('_','-'): algo for algo in algorithms}
 
 parser = argparse.ArgumentParser()
