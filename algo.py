@@ -5,8 +5,8 @@ from math import sqrt
 
 pho_s = 100.0
 pho_l = 200.0
-cost_s = 80.0
-cost_l = 160.0
+cost_s = 50.0
+cost_l = 120.0
 
 
 class Bandit(object) :
