@@ -113,7 +113,7 @@ def ucb_bv1(bandit, horizon, *args):
         
         print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, Regret=%.2f, Budget=%d"%(i, price, win, 100-(i+1-wins), reg, budget))
 
-    earnings = sum(rew)*(pho_l -cost_l- pho_s + cost_s) + 200*(pho_s - cost_s)
+    earnings = sum(rew)*(pho_l - pho_s ) + 200*(pho_s - cost_l)
     print ("Total Earnings = ", earnings)
     print ("Avg Large Price = ", avg_l_price) 
     return reg
