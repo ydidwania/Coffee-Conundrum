@@ -2,17 +2,24 @@ import numpy.random as nprand
 import numpy as np
 import argparse
 from math import sqrt
+import matplotlib.pyplot as plt
+
 
 pho_s = 100.0
-pho_l = 120.0
+pho_l = 120.0 
 cost_s = 50.0
 cost_l = 60.0
 norm_min = min(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)
 norm_max = max(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)
 
+
 def cost_arm(win,price,cost):
     if(cost == 'loss_in_profit'):
-        out = win*(pho_l - price)/(pho_l - pho_s)
+        # out = win*(pho_l - price)/(pho_l - pho_s)
+        if(price==pho_s):
+            out = 1
+        else:
+            out = win*(pho_l - price)/(pho_l - pho_s)
     elif(cost == 'cups_gone'):
         out = win*0 + (1 - win)*1.0
     return out
@@ -46,27 +53,30 @@ class Bandit(object) :
 def ln(x):
     return np.log(x)
 
-def ucb_bv1(c_type,r_type,bandit, horizon, *args):
-    print("Small Cup : %d // %d"%(pho_s,cost_s))
-    print("Large Cup : %d // %d"%(pho_l,cost_l))
-    print("norm_min = min(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)")
-    print("norm_max = max(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)")
+def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
+    # print("Small Cup : %d // %d"%(pho_s,cost_s))
+    # print("Large Cup : %d // %d"%(pho_l,cost_l))
+    # print("norm_min = min(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)")
+    # print("norm_max = max(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)")
 
     nb = bandit.n_bandits
     reg = 0
-    B = 10000
     earnings,i = 0,0
     n_pulls = [0]*nb
     ucb_a = [0.0]*nb
     cost, rew = [0.0]*nb, [0.0]*nb 
     lmbda = 1e-6
     D = lambda i,r,c,n : (r/c) + ((1+1/lmbda)*sqrt(ln(i)/n))/(lmbda - sqrt(ln(i)/n)) 
-    print("Starting out with Budget = ",B)
+    # print("Starting out with Budget = ",B,B_1)
     # for _ in range(2):hhttps://github.com/ydidwania/Coffee-Conundrumttps://github.com/ydidwania/Coffee-Conundrum
     wins,i = 0,0
     avg_l_price = 0.0
     avg_off_price = 0.0
-    while (B -(i-wins)) >0:
+    x = []
+    y = []
+    # while (cost[0]<B):
+    while (sum(cost[1:])<B_1-1+B and cost[0]<B):
+    # while(sum(cost[1:])<=B_1):
         if i<nb :
             arm = i
         else :
@@ -75,26 +85,51 @@ def ucb_bv1(c_type,r_type,bandit, horizon, *args):
         i += 1
         win = bandit.pull(arm)
         price = bandit.get_price(arm)
-        wins += win
-        cost[arm] += cost_arm(win,price,c_type)
+        
+        if(price == pho_s):
+            
+            cost[0] += 1
+        else:
+            if(win==1):
+                cost[arm] += cost_arm(win,price,c_type)
+            else:
+                cost[0] = cost[0] + 1
+                cost[arm] = cost[arm] + 1
+
         rew[arm]  += revenue_arm(win,price,r_type)
         n_pulls[arm] += 1
-        if (win):
+        if ((win) and (price>pho_s)):
+            wins += win
             avg_l_price = (avg_l_price*(wins-1) + (price))/wins
-        print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, B -(i-wins)))
+
+        # print (" N = %d, Offered_price = %.2f, result=%d, Small=%d, "%(i, price, win, B -(cost[0])))
+        # sum_of_cost ==> budget till now
+        
+        # x.append(i)
+        # y.append(cost[0])
+        # plt.pause(0.05)
         avg_off_price  += (price)
     avg_off_price = avg_off_price/i
         # print ("Total Earnings = ", earnings)
         # print ("Avg Large Price = ", avg_l_price) 
         # print("BOOST BY 100 SMALL CUPS")
         # B = 200
-
-    # earnings = sum(rew)*(pho_l - pho_s ) + i*(pho_s)
-    earnings = sum(rew)*(norm_max - norm_min ) + 200*(norm_min)
-    print ("Total Earnings = ", earnings)
-    print ("Avg Large Price = ", avg_l_price) 
-    print ("Avg offered Price = ", avg_off_price) 
-    return reg
+    # plt.title('Regret vs budget')
+    # plt.ylabel('Small cups_gone')
+    # plt.xlabel('Time')
+    # plt.plot(x,y)
+    # plt.show()  
+    earnings = sum(rew)*(pho_l - pho_s ) + i*(pho_s)
+    # print ("Total Earnings = ", earnings)
+    # print ("Avg Large Price = ", avg_l_price) 
+    # print ("Avg offered Price = ", avg_off_price) 
+    # print("Residual B_1 = ",B_1-sum(active_cost[1:])) 
+    # print('Remaining Small Cups = ',B-active_cost[0])
+    # print("No of large cup sold = ",i-active_cost[0])
+    # i =>N
+    # 
+    print(B, B_1, earnings, avg_l_price, avg_off_price, B+B_1-sum(cost[1:]), B-cost[0], i-cost[0],cost[0],i)
+    return earnings
 
 algorithms = [ucb_bv1]
 algorithms = {algo.__name__.replace('_','-'): algo for algo in algorithms}
@@ -104,19 +139,20 @@ revenue_type    = ['profit','revenue']
 parser = argparse.ArgumentParser()
 parser.add_argument('--instance',required=True)
 parser.add_argument('--algorithm', choices=list(algorithms.keys()), required=True)
-parser.add_argument('--epsilon', type=float, required=True)
-parser.add_argument('--horizon', type=int, required=True)
 parser.add_argument('--cost',choices=cost_type, required=True)
 parser.add_argument('--revenue',choices=revenue_type, required=True)
+parser.add_argument('--budget',type=int, required=True)
+parser.add_argument('--cups',type=int, required=True)
+parser.add_argument('--seed',type=int, required=True)
+
 
 args = parser.parse_args()
 bandit_file = open(args.instance, 'r')
 lines = bandit_file.readlines()
 algorithm = args.algorithm.replace('-','_')
-print('cost_type: ', args.cost )
-print('revenue_type: ',args.revenue)
-bandit_instance = Bandit(len(lines), [float(p) for p in lines], 20, [pho_s + (pho_l-pho_s)*i/19.0 for i in range(len(lines))])
+bandit_instance = Bandit(len(lines), [float(p) for p in lines], args.seed, [pho_s + (pho_l-pho_s)*i/19.0 for i in range(len(lines))])
 
-rew = algorithms[args.algorithm](args.cost,args.revenue,bandit_instance, args.horizon, 40, args.epsilon)
+reward = algorithms[args.algorithm](args.cups,args.budget,args.cost,args.revenue,bandit_instance)
+# print(reward)
 # reg = bandit_instance.get_max_reward(args.horizon) - rew
 # print ("%s, %s, %d, %s, %d, %s\n" %(args.instance, args.algorithm, args.randomSeed, args.epsilon, args.horizon, reg ))
