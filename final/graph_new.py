@@ -77,8 +77,9 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     avg_off_price = 0.0
     x = []
     y = []
+    n_rejects  = 0
     # while (cost[0]<B):
-    while (sum(active_cost[1:])<=B_1-1+B and active_cost[0]<B):
+    while (sum(active_cost[1:])<=B_1-1+n_rejects and active_cost[0]<B):
         if i<nb :
             arm = i
         else :
@@ -106,6 +107,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
             else:
                 active_cost[0] = active_cost[0] + 1
                 passive_cost[0] = passive_cost[0] + 1
+                n_rejects  += 1
                 passive_n_pulls[0] += 1
                 active_cost[arm] = active_cost[arm] + 1
                 for k in range(arm,nb):
@@ -146,7 +148,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     # print('Remaining Small Cups = ',B-active_cost[0])
     # print("No of large cup sold = ",i-active_cost[0])
     # # reward_total = sum(active_rew)
-    print(B, B_1, earnings, avg_l_price, avg_off_price, B_1+B-sum(active_cost[1:]), B-active_cost[0], i-active_cost[0],active_cost[0],i)
+    print(B, B_1, earnings, avg_l_price, avg_off_price, B_1+n_rejects-sum(active_cost[1:]), B-active_cost[0], i-active_cost[0],active_cost[0],i)
     return earnings
 
 algorithms = [ucb_bv1]
