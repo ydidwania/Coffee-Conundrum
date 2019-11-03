@@ -65,6 +65,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     earnings,i = 0,0
     passive_n_pulls = [0]*nb
     active_n_pulls = [0]*nb
+    active_n_success = [0]*nb
     ucb_a = [0.0]*nb
     passive_cost, passive_rew = [0.0]*nb, [0.0]*nb 
     active_cost, active_rew = [0.0]*nb, [0.0]*nb 
@@ -116,6 +117,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
         active_rew[arm]  += revenue_arm(win,price,r_type)
 
         active_n_pulls[arm] += 1
+        active_n_success[arm] += win
         if ((win) and (price>pho_s)):
             wins += win
             avg_l_price = (avg_l_price*(wins-1) + (price))/wins
@@ -146,7 +148,11 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     # print('Remaining Small Cups = ',B-active_cost[0])
     # print("No of large cup sold = ",i-active_cost[0])
     # # reward_total = sum(active_rew)
-    print(B, B_1, earnings, avg_l_price, avg_off_price, B_1+B-sum(active_cost[1:]), B-active_cost[0], i-active_cost[0],active_cost[0],i)
+    n_probs = [active_n_success[i]/active_n_pulls[i] for i in range(nb)]
+    n_probs = [str(i) for i in n_probs]
+    print(" ".join(n_probs))
+    print(" ".join([str(i) for i in active_n_pulls]))
+    # print(B, B_1, earnings, avg_l_price, avg_off_price, B_1+B-sum(active_cost[1:]), B-active_cost[0], i-active_cost[0],active_cost[0],i)
     return earnings
 
 algorithms = [ucb_bv1]

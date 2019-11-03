@@ -60,9 +60,9 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     # print("norm_max = max(-cost_l + pho_s, pho_l - cost_l, pho_s - cost_s)")
 
     nb = bandit.n_bandits
-    reg = 0
     earnings,i = 0,0
-    n_pulls = [0]*nb
+    n_pulls = [0.0]*nb
+    n_success = [0.0]*nb
     ucb_a = [0.0]*nb
     cost, rew = [0.0]*nb, [0.0]*nb 
     lmbda = 1e-6
@@ -98,6 +98,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
 
         rew[arm]  += revenue_arm(win,price,r_type)
         n_pulls[arm] += 1
+        n_success[arm] += win
         if ((win) and (price>pho_s)):
             wins += win
             avg_l_price = (avg_l_price*(wins-1) + (price))/wins
@@ -127,8 +128,11 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     # print('Remaining Small Cups = ',B-active_cost[0])
     # print("No of large cup sold = ",i-active_cost[0])
     # i =>N
-    # 
-    print(B, B_1, earnings, avg_l_price, avg_off_price, B+B_1-sum(cost[1:]), B-cost[0], i-cost[0],cost[0],i)
+    n_probs = [n_success[i]/n_pulls[i] for i in range(nb)]
+    n_probs = [str(i) for i in n_probs]
+    print(" ".join(n_probs))
+    print(" ".join([str(i) for i in n_pulls]))
+    # print(B, B_1, earnings, avg_l_price, avg_off_price, B+B_1-sum(cost[1:]), B-cost[0], i-cost[0],cost[0],i)
     return earnings
 
 algorithms = [ucb_bv1]
