@@ -74,8 +74,9 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
     avg_off_price = 0.0
     x = []
     y = []
+    n_rejects  = 0
     # while (cost[0]<B):
-    while (sum(cost[1:])<B_1-1+B and cost[0]<B):
+    while (sum(cost[1:])<B_1-1+n_rejects and cost[0]<B):
     # while(sum(cost[1:])<=B_1):
         if i<nb :
             arm = i
@@ -95,6 +96,7 @@ def ucb_bv1(B,B_1,c_type,r_type,bandit, *args):
             else:
                 cost[0] = cost[0] + 1
                 cost[arm] = cost[arm] + 1
+                n_rejects += 1
 
         rew[arm]  += revenue_arm(win,price,r_type)
         n_pulls[arm] += 1
