@@ -2,27 +2,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-D_opt = np.loadtxt("graph_opt.txt", usecols=range(0,10), dtype=np.float64)
+D_opt = np.loadtxt("prob_opt.txt", usecols=range(0,20), dtype=np.float64)
 
-D_new = np.loadtxt("graph_new.txt", usecols=range(0,10), dtype=np.float64)
+D_new = np.loadtxt("prob_new.txt", usecols=range(0,20), dtype=np.float64)
 
 # D_opt_avg = np.zeros(shape=(81,10))
 # D_new_avg = np.zeros(shape=(81,10))
 
-D_opt_avg = np.zeros(shape=(64,10))
-D_new_avg = np.zeros(shape=(64,10))
+D_opt_avg = np.zeros(shape=(64,20))
+D_new_avg = np.zeros(shape=(64,20))
 
 for i in range(64):
 	for j in range(20):
-		D_opt_avg[i] = np.add(D_opt_avg[i],D_opt[j+20*i])
-		D_new_avg[i] = np.add(D_new_avg[i],D_new[j+20*i])
+		D_opt_avg[i] = np.add(D_opt_avg[i],D_opt[2*j+40*i]) #Every alternate
+		D_new_avg[i] = np.add(D_new_avg[i],D_new[2*j+40*i]) #Every alternate
 
 	
 	D_opt_avg[i] = D_opt_avg[i]/20
 	D_new_avg[i] = D_new_avg[i]/20
 # print(D_opt_avg)
-np.savetxt("opt_avg.txt", D_opt_avg, fmt="%.4f", delimiter=",", newline="\n")
-np.savetxt("new_avg.txt", D_new_avg, fmt="%.4f", delimiter=",", newline="\n")
+np.savetxt("opt_prob_avg.txt", D_opt_avg, fmt="%.4f", delimiter=",", newline="\n")
+np.savetxt("new_prob_avg.txt", D_new_avg, fmt="%.4f", delimiter=",", newline="\n")
 # np.savetxt('graph_opt_avg.txt',D_opt_avg)
 
 # N_s = 1000
